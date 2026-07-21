@@ -76,23 +76,7 @@ columns, the same cleaned file produced in the Week 1 project.
    ```
 3. Run all cells in order.
 
-## Submitting to GitHub
 
-Per the program's convention, name the repository `vortextech-aiml-week3`.
+## Status
 
-From inside this project folder:
-
-```
-git init
-git add .
-git commit -m "Week 3: Regression and Clustering on Student Employability Data"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/vortextech-aiml-week3.git
-git push -u origin main
-```
-
-If the repository doesn't exist yet on GitHub, create it first (empty, no
-README) at github.com/new using that name, then run the commands above.
-
-After pushing, fill out the Week 3 submission form with your name, track,
-and the GitHub repository link, per the program's instructions.
+Completed — Jul 7, 2026.
