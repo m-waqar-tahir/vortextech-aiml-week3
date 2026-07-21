@@ -1,20 +1,98 @@
-# Vortex Tech AI/ML Internship — Week 3
+# Student Employability: Regression and Clustering
 
-Regression and clustering project completed for Week 3 of the AI/ML 
-Internship at Vortex Tech.
+Vortex Tech AI & ML Internship 2026 — Week 3
 
-## Task
-Built and evaluated a regression model (Linear Regression or Random Forest 
-Regressor) using RMSE and R², and applied K-Means clustering with the elbow 
-method to identify hidden groups, visualized in 2D.
+## Overview
 
-## Tech Stack
-Python, Pandas, Scikit-learn, Matplotlib, Jupyter Notebook
+Two independent machine learning tasks on the same cleaned dataset used in
+Weeks 1 and 2:
 
-## Contents
-- `week3_regression_clustering.ipynb` — main notebook with regression and clustering analysis
-- `dataset.csv` — dataset used
-- `README.md` — this file
+1. **Regression** — predicting `expected_salary_pkr`, a continuous target,
+   using Linear Regression and Random Forest Regressor.
+2. **Clustering** — grouping students into hidden segments using K-Means on
+   `cgpa` and `attendance_percentage`, with the number of clusters chosen via
+   the elbow method.
 
-## Status
-Not started — task will begin once Week 2 is submitted.
+## Dataset
+
+`pk_student_employability_cleaned.csv` — 47,839 cleaned student records, 49
+columns, the same cleaned file produced in the Week 1 project.
+
+## Files
+
+- `student_employability_regression_clustering.ipynb` — main notebook, split
+  into a Regression section and a Clustering section, every code cell
+  preceded by a titled markdown description
+- `pk_student_employability_cleaned.csv` — cleaned dataset used by the
+  notebook
+- `Week3_Regression_Clustering_Full_Guide.txt` — step-by-step explanation of
+  every code cell, including the reasoning behind feature and column choices
+- `requirements.txt` — Python libraries required to run the notebook
+
+## Part 1: Regression
+
+- Target: `expected_salary_pkr`
+- Features exclude `student_id` (identifier) and `likely_to_get_hired` /
+  `employability_status` (leakage risks — both are outcome labels partly
+  determined by salary and related factors)
+- `job_readiness_score` is kept as a feature: it correlates with the target
+  at only ~0.28, a real but moderate relationship, not leakage
+- 80/20 train-test split, no stratification (continuous target)
+- Two models compared: Linear Regression and Random Forest Regressor
+- Evaluated with RMSE and R²
+
+**Results:**
+- Linear Regression: RMSE ≈ 19,847 PKR, R² ≈ 0.454
+- Random Forest: RMSE ≈ 20,336 PKR, R² ≈ 0.427
+- Linear Regression slightly outperforms Random Forest — a useful finding in
+  itself, since more complexity doesn't automatically help, especially with
+  200+ one-hot encoded columns where Random Forest has more room to fit noise
+
+## Part 2: Clustering
+
+- Columns: `cgpa` and `attendance_percentage`, scaled with StandardScaler
+- Elbow method run for k = 1 to 10; k=4 chosen based on where the rate of
+  inertia reduction drops by more than half (from ~21,564 between k=2→3 to
+  ~9,515 between k=3→4)
+- Final KMeans fit with k=4, visualized as a 2D scatter plot colored by
+  cluster
+
+**Cluster profiles:**
+- High performer, lower attendance (CGPA ~3.35, attendance ~66%)
+- At-risk: low CGPA and low attendance (CGPA ~2.50, attendance ~66%)
+- High performer, engaged (CGPA ~3.29, attendance ~88%)
+- Present but struggling: high attendance, lower CGPA (CGPA ~2.45,
+  attendance ~88%)
+
+## How to run
+
+1. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+2. Open the notebook:
+   ```
+   jupyter notebook student_employability_regression_clustering.ipynb
+   ```
+3. Run all cells in order.
+
+## Submitting to GitHub
+
+Per the program's convention, name the repository `vortextech-aiml-week3`.
+
+From inside this project folder:
+
+```
+git init
+git add .
+git commit -m "Week 3: Regression and Clustering on Student Employability Data"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/vortextech-aiml-week3.git
+git push -u origin main
+```
+
+If the repository doesn't exist yet on GitHub, create it first (empty, no
+README) at github.com/new using that name, then run the commands above.
+
+After pushing, fill out the Week 3 submission form with your name, track,
+and the GitHub repository link, per the program's instructions.

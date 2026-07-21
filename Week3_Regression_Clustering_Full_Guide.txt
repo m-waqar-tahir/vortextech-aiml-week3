@@ -1,0 +1,409 @@
+VORTEX TECH AI/ML INTERNSHIP - WEEK 3 - FULL CODE GUIDE
+Project: Regression and Clustering on Real Data
+Dataset: pk_student_employability_cleaned.csv (same cleaned dataset from Week 1
+and Week 2)
+
+This week has two independent parts: a regression model predicting a continuous
+target, and a clustering analysis grouping students into hidden segments. Both use
+the same dataset here, but they are separate techniques solving different kinds of
+questions, and your notebook should treat them as two clearly separated sections.
+
+============================================================
+PART 1: REGRESSION
+============================================================
+
+Regression target: expected_salary_pkr. This is a genuinely continuous numeric
+column, matching the brief's own example of salaries, and it is not the same
+target used in Week 2, so there is no overlap or reused work between weeks.
+
+------------------------------------------------------------
+STEP 1: Import libraries
+------------------------------------------------------------
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+Explanation:
+Same starting libraries as previous weeks. Scikit-learn pieces are imported later,
+at the point each is first used.
+
+------------------------------------------------------------
+STEP 2: Load the cleaned dataset
+------------------------------------------------------------
+
+df = pd.read_csv('pk_student_employability_cleaned.csv')
+df.shape
+df.head()
+
+Explanation:
+Loads the already-cleaned dataset from Week 1, same as Week 2 did. shape and head
+confirm it loaded correctly.
+
+------------------------------------------------------------
+STEP 3: Look at the target column
+------------------------------------------------------------
+
+df['expected_salary_pkr'].describe()
+
+Explanation:
+describe gives you the mean, standard deviation, min, max, and quartiles of the
+target before you build anything. On this dataset the mean is approximately 75,953
+PKR with a standard deviation of approximately 26,715, which becomes the reference
+point for judging whether your model's error later is large or small: an error
+close to the standard deviation means the model is barely better than guessing the
+average for everyone, while a much smaller error means it is genuinely learning
+patterns.
+
+------------------------------------------------------------
+STEP 4: Select feature columns, with the same leakage caution as Week 2
+------------------------------------------------------------
+
+drop_cols = ['student_id', 'likely_to_get_hired', 'employability_status', 'expected_salary_pkr']
+X = df.drop(columns=drop_cols)
+y = df['expected_salary_pkr']
+
+X.shape
+y.shape
+
+Explanation:
+student_id is dropped as a pure identifier, same reasoning as Week 2.
+expected_salary_pkr is dropped from X because it is the target itself, stored
+separately as y. likely_to_get_hired and employability_status are dropped again
+here for the same leakage reason as Week 2: both are outcome labels that are
+themselves partly determined by salary and related career-readiness factors, shown
+by the fact that Highly Employable students average about 77,509 PKR expected
+salary versus about 52,856 to 59,545 PKR for the other three status categories.
+Including either would let the model lean on a label that already encodes
+information about the answer, rather than learning from independent student
+traits.
+
+One column needs a judgment call rather than an automatic drop this time:
+job_readiness_score correlates with expected_salary_pkr at roughly 0.28, which is
+a real but moderate relationship, not the extreme near-restatement seen with the
+Week 2 classification target (which was closer to 0.60). You can check this
+yourself with
+df.select_dtypes(include='number').corr()['expected_salary_pkr'].sort_values(ascending=False)
+This guide keeps job_readiness_score in as a feature, treating it as a legitimate
+predictor rather than leakage, but you should be able to justify that choice in
+your markdown interpretation rather than including it without thinking about it.
+
+------------------------------------------------------------
+STEP 5: Encode categorical features
+------------------------------------------------------------
+
+X = pd.get_dummies(X, drop_first=True)
+X.shape
+
+Explanation:
+Same one-hot encoding pattern as Week 2. This dataset has several categorical
+columns with many unique values (university_name, specialization, and others), so
+expect X to end up with well over 200 columns after this step. That is expected
+and not an error.
+
+------------------------------------------------------------
+STEP 6: Train-test split
+------------------------------------------------------------
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+X_train.shape
+X_test.shape
+
+Explanation:
+Same 80/20 split pattern as Week 2. Note there is no stratify argument this time.
+stratify is only meaningful for a categorical target where you want to preserve
+class proportions; expected_salary_pkr is continuous, so there are no classes to
+balance.
+
+------------------------------------------------------------
+STEP 7: Train a Linear Regression model
+------------------------------------------------------------
+
+from sklearn.linear_model import LinearRegression
+
+lr_model = LinearRegression()
+lr_model.fit(X_train, y_train)
+
+lr_predictions = lr_model.predict(X_test)
+
+Explanation:
+LinearRegression is the standard starting point for predicting a continuous
+target: it fits a straight-line relationship between the features and the target.
+fit trains it on the training data, predict generates salary estimates for the
+unseen testing rows.
+
+------------------------------------------------------------
+STEP 8: Evaluate the Linear Regression model
+------------------------------------------------------------
+
+from sklearn.metrics import mean_squared_error, r2_score
+
+lr_rmse = np.sqrt(mean_squared_error(y_test, lr_predictions))
+lr_r2 = r2_score(y_test, lr_predictions)
+
+print(f"Linear Regression RMSE: {lr_rmse:,.2f}")
+print(f"Linear Regression R2:   {lr_r2:.4f}")
+
+Explanation:
+mean_squared_error calculates the average of the squared differences between
+actual and predicted salaries. Taking its square root (RMSE, root mean squared
+error) converts that back into the same unit as the target, PKR, making it
+directly interpretable: it represents roughly how far off, in rupees, the model's
+predictions are on average. r2_score measures what proportion of the variation in
+salary the model explains, from 0 (no better than always predicting the average)
+to 1 (perfect prediction). On this dataset, Linear Regression achieves an RMSE of
+approximately 19,847 and an R2 of approximately 0.454, meaning the model explains
+roughly 45 percent of the variation in expected salary, with typical prediction
+error smaller than the target's overall standard deviation of about 26,715, so it
+is doing meaningfully better than guessing the average for every student, but far
+from a precise predictor.
+
+------------------------------------------------------------
+STEP 9: Train and evaluate a Random Forest Regressor for comparison
+------------------------------------------------------------
+
+from sklearn.ensemble import RandomForestRegressor
+
+rf_model = RandomForestRegressor(random_state=42, n_estimators=100)
+rf_model.fit(X_train, y_train)
+
+rf_predictions = rf_model.predict(X_test)
+
+rf_rmse = np.sqrt(mean_squared_error(y_test, rf_predictions))
+rf_r2 = r2_score(y_test, rf_predictions)
+
+print(f"Random Forest RMSE: {rf_rmse:,.2f}")
+print(f"Random Forest R2:   {rf_r2:.4f}")
+
+Explanation:
+Same fit, predict, evaluate pattern as Step 7 and 8, using RandomForestRegressor
+instead, which builds many decision trees and averages their predictions rather
+than fitting one straight line. n_estimators=100 sets how many trees to build.
+On this dataset, Random Forest actually performs slightly worse than Linear
+Regression here, with an RMSE of approximately 20,336 and R2 of approximately
+0.427. This is a genuinely useful, slightly counterintuitive result worth
+including in your interpretation rather than hiding: more complex models do not
+automatically perform better, especially once you have over 200 columns from
+one-hot encoding many categorical columns with many unique values, where a more
+flexible model like Random Forest has more opportunity to fit noise in the
+training data rather than the true underlying pattern. Linear Regression's
+simplicity worked in its favor here.
+
+------------------------------------------------------------
+STEP 10: Compare both models
+------------------------------------------------------------
+
+regression_comparison = pd.DataFrame({
+    'Linear Regression': [lr_rmse, lr_r2],
+    'Random Forest': [rf_rmse, rf_r2]
+}, index=['RMSE', 'R2'])
+
+regression_comparison.round(4)
+
+Explanation:
+Puts both models' metrics side by side in one small table, using values already
+calculated in Steps 8 and 9, for direct comparison.
+
+------------------------------------------------------------
+STEP 11: Written interpretation - Regression
+------------------------------------------------------------
+
+This step is not code. In a markdown cell, cover:
+- Why you chose Linear Regression as your primary model, and what trying Random
+  Forest revealed. Consider mentioning that a simpler model outperforming a more
+  complex one is itself a useful finding, not a failure.
+- Your evaluation results in plain terms: what RMSE of roughly 19,847 to 20,336
+  PKR actually means for someone using this model (how much you'd expect a real
+  salary prediction to be off by), and what an R2 of roughly 0.43 to 0.45 means
+  (the model captures under half of what drives salary expectations, so other
+  unmeasured factors clearly matter too).
+- What you would try next: more targeted feature engineering, dropping some of
+  the very high-cardinality categorical columns that may be adding more noise
+  than signal, trying a regularized linear model, or gathering features not
+  present in this dataset (such as actual work experience or specific technical
+  test scores) that might explain more of the remaining variation.
+
+============================================================
+PART 2: CLUSTERING
+============================================================
+
+Clustering columns: cgpa and attendance_percentage. Both are continuous, on
+different natural scales (cgpa 1.5 to 4.0, attendance_percentage 30 to 100), which
+makes this a good demonstration of why scaling matters before clustering.
+
+------------------------------------------------------------
+STEP 12: Select and inspect the clustering columns
+------------------------------------------------------------
+
+cluster_data = df[['cgpa', 'attendance_percentage']]
+cluster_data.describe()
+
+Explanation:
+Selects just the two numeric columns to cluster on. Clustering works on the actual
+numeric distance between points, so using only 2 columns here also makes the
+result directly plottable in 2D afterward, which is part of why the brief
+recommends 2 to 3 columns rather than many.
+
+------------------------------------------------------------
+STEP 13: Scale the data
+------------------------------------------------------------
+
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(cluster_data)
+
+Explanation:
+StandardScaler transforms each column to have a mean of 0 and a standard deviation
+of 1. This step matters more here than it might first appear: cgpa ranges from
+1.5 to 4.0, a span of 2.5, while attendance_percentage ranges from 30 to 100, a
+span of 70. Without scaling, KMeans would treat differences in attendance
+percentage as vastly more important than differences in cgpa simply because the
+raw numbers are bigger, not because attendance is actually more meaningful. Fitting
+and transforming happens together here with fit_transform since this is the only
+place this data is scaled.
+
+------------------------------------------------------------
+STEP 14: Run the elbow method
+------------------------------------------------------------
+
+from sklearn.cluster import KMeans
+
+inertias = []
+k_range = range(1, 11)
+
+for k in k_range:
+    km = KMeans(n_clusters=k, random_state=42, n_init=10)
+    km.fit(scaled_data)
+    inertias.append(km.inertia_)
+
+plt.figure(figsize=(8, 5))
+plt.plot(k_range, inertias, marker='o')
+plt.title('Elbow Method for Optimal k')
+plt.xlabel('Number of Clusters (k)')
+plt.ylabel('Inertia')
+plt.xticks(list(k_range))
+plt.tight_layout()
+plt.show()
+
+Explanation:
+This loop fits a separate KMeans model for every value of k from 1 to 10, and
+records inertia for each, which measures how tightly grouped the points are
+within their assigned clusters, lower meaning tighter. n_init=10 runs the
+clustering 10 times with different random starting points for each k and keeps
+the best result, which avoids getting an unlucky result from a single random
+start. Plotting k against inertia produces a curve that drops steeply at first,
+then flattens out. The point where it visibly bends from a steep drop to a much
+flatter slope is the elbow, and it suggests the k value where adding more
+clusters stops meaningfully improving the grouping.
+
+------------------------------------------------------------
+STEP 15: Choose k and justify it with the actual numbers
+------------------------------------------------------------
+
+This step is not code, but should reference real numbers. On this dataset, the
+inertia values are approximately: k=1: 95,678, k=2: 63,962, k=3: 42,398, k=4:
+32,883, k=5: 27,615, k=6: 22,634, continuing to drop more gradually afterward. The
+drop from k=2 to k=3 is about 21,564, and the drop from k=3 to k=4 is about 9,515,
+under half the size, which is where the curve visibly starts flattening. This
+points to k=4 as a reasonable choice: enough clusters to capture real structure,
+without adding clusters past the point where they meaningfully reduce inertia.
+Run your own version of this comparison, since your exact numbers may differ
+slightly depending on your environment, and state your chosen k with this kind of
+reasoning in a markdown cell, not just as a number picked without justification.
+
+------------------------------------------------------------
+STEP 16: Fit the final KMeans model
+------------------------------------------------------------
+
+chosen_k = 4
+
+kmeans = KMeans(n_clusters=chosen_k, random_state=42, n_init=10)
+cluster_labels = kmeans.fit_predict(scaled_data)
+
+df['cluster'] = cluster_labels
+df['cluster'].value_counts()
+
+Explanation:
+fit_predict both fits the model on the scaled data and immediately returns the
+cluster assignment for every row in one step. Storing the result as a new column
+in df, called cluster, keeps each student's group assignment attached to their
+original data for interpretation afterward. value_counts shows how many students
+fall into each of the 4 clusters, useful for sanity-checking that no cluster is
+suspiciously empty or contains nearly everyone.
+
+------------------------------------------------------------
+STEP 17: Visualize the clusters
+------------------------------------------------------------
+
+plt.figure(figsize=(9, 7))
+scatter = plt.scatter(
+    df['cgpa'], df['attendance_percentage'],
+    c=df['cluster'], cmap='viridis', alpha=0.5, s=10
+)
+plt.xlabel('CGPA')
+plt.ylabel('Attendance Percentage')
+plt.title(f'Student Clusters by CGPA and Attendance (k={chosen_k})')
+plt.colorbar(scatter, label='Cluster')
+plt.tight_layout()
+plt.show()
+
+Explanation:
+This plots every student as a point using their actual (unscaled) cgpa and
+attendance_percentage values, so the chart stays in real, readable units rather
+than the scaled version used for the clustering math itself. c=df['cluster']
+colors each point according to its cluster assignment, so the four groups become
+visually distinguishable. alpha=0.5 and a small point size s=10 help keep the plot
+readable given nearly 48,000 overlapping points.
+
+------------------------------------------------------------
+STEP 18: Profile each cluster in real-world terms
+------------------------------------------------------------
+
+df.groupby('cluster')[['cgpa', 'attendance_percentage']].mean()
+
+Explanation:
+Averaging cgpa and attendance_percentage within each cluster turns the abstract
+group numbers (0, 1, 2, 3) into a readable profile. On this dataset, the four
+clusters work out approximately like this:
+- Cluster 0: cgpa around 3.35, attendance around 66 percent -- strong academically,
+  but with lower attendance
+- Cluster 1: cgpa around 2.50, attendance around 66 percent -- lower on both
+  measures, an at-risk group worth flagging
+- Cluster 2: cgpa around 3.29, attendance around 88 percent -- strong on both
+  measures, the most engaged high performers
+- Cluster 3: cgpa around 2.45, attendance around 88 percent -- attending
+  consistently but still struggling academically, a group that might benefit from
+  academic support despite good attendance
+
+The four groups split roughly evenly, each holding around 11,300 to 13,400
+students. Run this yourself and describe what you actually see, since cluster
+numbering (which group gets called 0 versus 1) can vary between runs even with
+the same random_state depending on library versions.
+
+------------------------------------------------------------
+STEP 19: Written interpretation - Clustering
+------------------------------------------------------------
+
+This step is not code. In a markdown cell, cover:
+- Why you picked k=4 (or your own chosen value), referencing the actual elbow
+  method numbers from Step 15, not just visual impression.
+- What each cluster represents in real-world terms, using the profile from Step
+  18. Try to give each cluster a short descriptive label (for example, "high
+  performer, lower attendance" or "at-risk: low CGPA and low attendance") rather
+  than leaving them as unlabeled numbers.
+- What this grouping could be used for practically, for example: the at-risk
+  cluster (low CGPA, low attendance) could be a useful list for a university
+  advising team to proactively reach out to, while the high-attendance,
+  low-CGPA cluster might indicate students who are present but not engaging
+  effectively, worth a different kind of intervention than the at-risk group.
+
+------------------------------------------------------------
+END OF WEEK 3 GUIDE
+------------------------------------------------------------
