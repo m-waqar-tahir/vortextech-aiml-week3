@@ -76,7 +76,55 @@ columns, the same cleaned file produced in the Week 1 project.
    ```
 3. Run all cells in order.
 
+## Key Findings
+
+- **Regression:** Linear Regression outperformed Random Forest for predicting
+  expected salary (RMSE ≈ 19,847 PKR vs ≈ 20,336 PKR, R² ≈ 0.454 vs ≈ 0.427).
+  This is a meaningful result in itself — added model complexity did not
+  translate into better predictions here, likely because Random Forest had
+  more room to fit noise across the 200+ columns produced by one-hot
+  encoding several high-cardinality categorical features.
+- **Regression accuracy in context:** an R² of ~0.45 means the model
+  explains under half of what drives expected salary. Academic and
+  activity-based features alone are informative but incomplete — factors
+  like actual work experience or standardized skill assessments, not
+  present in this dataset, likely account for a meaningful share of the
+  remaining variation.
+- **Clustering:** four distinct student segments emerged from CGPA and
+  attendance alone, split almost evenly across ~11,300–13,400 students each.
+  The clearest actionable group is the at-risk segment (low CGPA, low
+  attendance), while the "present but struggling" segment (high attendance,
+  low CGPA) suggests attendance alone is not a reliable proxy for academic
+  engagement.
+- **Practical implication:** these two techniques answer different
+  questions — regression estimates a specific expected value, while
+  clustering reveals structure and subgroups that a single average would
+  hide. Together, they suggest a university advising team could use the
+  clusters to prioritize *who* to reach out to, and features like CGPA and
+  internship experience to inform *what* outcomes to expect.
+
+## Conclusion
+
+This project applied two core machine learning techniques, regression and
+clustering, to the same real-world student dataset, moving beyond the
+descriptive analysis of Weeks 1 and 2 into predictive and unsupervised
+methods. The regression results highlight the value of testing multiple
+models rather than assuming complexity improves performance, while the
+clustering results demonstrate how unsupervised learning can surface
+actionable subgroups that summary statistics alone would miss. Together,
+these findings reflect a practical, evidence-based approach to student
+employability analysis, with clear directions identified for further
+refinement.
+
+## Repository
+
+https://github.com/m-waqar-tahir/vortextech-aiml-week3
 
 ## Status
 
-Completed — Jul 7, 2026.
+✅ Completed
+
+## Author
+
+Muhammad Waqar Tahir
+Vortex Tech AI & ML Internship 2026 — Week 3
